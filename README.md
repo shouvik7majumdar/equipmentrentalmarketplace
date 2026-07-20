@@ -1,6 +1,6 @@
 # Stellar Equipment Rental Marketplace (RentChain)
 
-[![CI](https://github.com/brooklyyynnn/equipment-rental-marketplace/actions/workflows/pr.yml/badge.svg)](https://github.com/brooklyyynnn/equipment-rental-marketplace/actions/workflows/pr.yml)
+[![CI](https://github.com/shouvik7majumdar/equipmentrentalmarketplace/actions/workflows/pr.yml/badge.svg)](https://github.com/shouvik7majumdar/equipmentrentalmarketplace/actions/workflows/pr.yml)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://equipment-rental-marketplace.vercel.app/)
 [![Stellar](https://img.shields.io/badge/Powered%20by-Soroban-blueviolet?logo=stellar)](https://stellar.org)
 
@@ -12,7 +12,7 @@ This DApp enables equipment owners to list tools/machinery and renters to lease 
 
 ## 🔗 Project Links
 
-* **GitHub Repository**: [brooklyyynnn/equipment-rental-marketplace](https://github.com/brooklyyynnn/equipment-rental-marketplace)
+* **GitHub Repository**: [shouvik7majumdar/equipmentrentalmarketplace](https://github.com/shouvik7majumdar/equipmentrentalmarketplace)
 * **Live Demo**: [RentChain Production App](https://equipment-rental-marketplace.vercel.app/)
 
 

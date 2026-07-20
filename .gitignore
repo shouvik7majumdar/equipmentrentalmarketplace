@@ -46,6 +46,5 @@ stellar.exe
 /packages/rental-client/dist/
 /packages/review-registry-client/node_modules/
 /packages/review-registry-client/dist/
-/lib/config.json
 .env.local
 

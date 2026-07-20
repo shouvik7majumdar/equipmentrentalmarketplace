@@ -34,11 +34,11 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCWU6TT5NKH43SW72I6XISHBBGL4H7UX74QCMJIACE6SVJW6K27NGNNY",
+    contractId: "CBDHXTQTI6RM57GRIGG7M7QZKLG4OWYLV6ID7JQ5LCPP5UBDROJRR6VH",
   }
 } as const
 
-export type DataKey = {tag: "Admin", values: void} | {tag: "Token", values: void} | {tag: "TotalEquipment", values: void} | {tag: "Equipment", values: readonly [u32]};
+export type DataKey = {tag: "Admin", values: void} | {tag: "Token", values: void} | {tag: "TotalEquipment", values: void} | {tag: "Equipment", values: readonly [u32]} | {tag: "ReviewRegistry", values: void};
 
 
 export interface Equipment {
@@ -66,6 +66,12 @@ export interface Client {
    * Initialize the contract with an admin and the payment token address (e.g. native SAC or custom token)
    */
   init: ({admin, token_address}: {admin: string, token_address: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a upgrade transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Upgrade contract WASM source code (Admin only)
+   */
+  upgrade: ({new_wasm_hash}: {new_wasm_hash: Buffer}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a get_equipment transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -103,6 +109,12 @@ export interface Client {
    */
   get_total_equipment: (options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
+  /**
+   * Construct and simulate a set_review_registry transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Set the review registry contract address (Admin only)
+   */
+  set_review_registry: ({review_registry}: {review_registry: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
@@ -121,26 +133,30 @@ export class Client extends ContractClient {
   }
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABAAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAAFVG9rZW4AAAAAAAAAAAAAAAAAAA5Ub3RhbEVxdWlwbWVudAAAAAAAAQAAAAAAAAAJRXF1aXBtZW50AAAAAAAAAQAAAAQ=",
+      new ContractSpec([ "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABQAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAAFVG9rZW4AAAAAAAAAAAAAAAAAAA5Ub3RhbEVxdWlwbWVudAAAAAAAAQAAAAAAAAAJRXF1aXBtZW50AAAAAAAAAQAAAAQAAAAAAAAAAAAAAA5SZXZpZXdSZWdpc3RyeQAA",
         "AAAAAQAAAAAAAAAAAAAACUVxdWlwbWVudAAAAAAAAAoAAAAAAAAAB2RlcG9zaXQAAAAACwAAAAAAAAALZGVzY3JpcHRpb24AAAAAEAAAAAAAAAACaWQAAAAAAAQAAAAAAAAABW93bmVyAAAAAAAAEwAAAAAAAAANcHJpY2VfcGVyX2RheQAAAAAAAAsAAAAAAAAAD3JlbnRfc3RhcnRfdGltZQAAAAAGAAAAAAAAAAtyZW50YWxfZGF5cwAAAAAEAAAAAAAAAAZyZW50ZXIAAAAAA+gAAAATAAAAAAAAAAZzdGF0dXMAAAAAB9AAAAAMUmVudGFsU3RhdHVzAAAAAAAAAAV0aXRsZQAAAAAAABA=",
         "AAAAAAAAAGVJbml0aWFsaXplIHRoZSBjb250cmFjdCB3aXRoIGFuIGFkbWluIGFuZCB0aGUgcGF5bWVudCB0b2tlbiBhZGRyZXNzIChlLmcuIG5hdGl2ZSBTQUMgb3IgY3VzdG9tIHRva2VuKQAAAAAAAARpbml0AAAAAgAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAAAAAA10b2tlbl9hZGRyZXNzAAAAAAAAEwAAAAA=",
         "AAAAAwAAAAAAAAAAAAAADFJlbnRhbFN0YXR1cwAAAAMAAAAAAAAACUF2YWlsYWJsZQAAAAAAAAAAAAAAAAAABlJlbnRlZAAAAAAAAQAAAAAAAAAIUmV0dXJuZWQAAAAC",
+        "AAAAAAAAAC5VcGdyYWRlIGNvbnRyYWN0IFdBU00gc291cmNlIGNvZGUgKEFkbWluIG9ubHkpAAAAAAAHdXBncmFkZQAAAAABAAAAAAAAAA1uZXdfd2FzbV9oYXNoAAAAAAAD7gAAACAAAAAA",
         "AAAAAAAAABRSZWFkIGVxdWlwbWVudCBzdGF0ZQAAAA1nZXRfZXF1aXBtZW50AAAAAAAAAQAAAAAAAAACaWQAAAAAAAQAAAABAAAD6AAAB9AAAAAJRXF1aXBtZW50AAAA",
         "AAAAAAAAACZMaXN0IGEgbmV3IHBpZWNlIG9mIGVxdWlwbWVudCBmb3IgcmVudAAAAAAADmxpc3RfZXF1aXBtZW50AAAAAAAFAAAAAAAAAAVvd25lcgAAAAAAABMAAAAAAAAABXRpdGxlAAAAAAAAEAAAAAAAAAALZGVzY3JpcHRpb24AAAAAEAAAAAAAAAANcHJpY2VfcGVyX2RheQAAAAAAAAsAAAAAAAAAB2RlcG9zaXQAAAAACwAAAAEAAAAE",
         "AAAAAAAAADhSZW50IGEgcGllY2Ugb2YgZXF1aXBtZW50IGZvciBhIHNwZWNpZmllZCBudW1iZXIgb2YgZGF5cwAAAA5yZW50X2VxdWlwbWVudAAAAAAAAwAAAAAAAAAGcmVudGVyAAAAAAATAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAEZGF5cwAAAAQAAAAA",
         "AAAAAAAAAGJPd25lciBpbnNwZWN0cyBlcXVpcG1lbnQsIHJlZnVuZHMgdGhlIHNlY3VyaXR5IGRlcG9zaXQgKG1pbnVzIGRhbWFnZXMpLCBhbmQgY29sbGVjdHMgcmVudGFsIHBheW91dAAAAAAADnJlc29sdmVfcmVudGFsAAAAAAAEAAAAAAAAAAVvd25lcgAAAAAAABMAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAA5yZWZ1bmRfZGVwb3NpdAAAAAAACwAAAAAAAAANY2xhaW1fZGVwb3NpdAAAAAAAAAsAAAAA",
         "AAAAAAAAAE9SZW50ZXIgc2lnbmFscyByZXR1cm4gb2YgdGhlIGVxdWlwbWVudCwgcGVuZGluZyBvd25lciBpbnNwZWN0aW9uIGFuZCByZXNvbHV0aW9uAAAAABByZXR1cm5fZXF1aXBtZW50AAAAAgAAAAAAAAAGcmVudGVyAAAAAAATAAAAAAAAAAJpZAAAAAAABAAAAAA=",
-        "AAAAAAAAABtSZWFkIHRvdGFsIGVxdWlwbWVudCBsaXN0ZWQAAAAAE2dldF90b3RhbF9lcXVpcG1lbnQAAAAAAAAAAAEAAAAE" ]),
+        "AAAAAAAAABtSZWFkIHRvdGFsIGVxdWlwbWVudCBsaXN0ZWQAAAAAE2dldF90b3RhbF9lcXVpcG1lbnQAAAAAAAAAAAEAAAAE",
+        "AAAAAAAAADVTZXQgdGhlIHJldmlldyByZWdpc3RyeSBjb250cmFjdCBhZGRyZXNzIChBZG1pbiBvbmx5KQAAAAAAABNzZXRfcmV2aWV3X3JlZ2lzdHJ5AAAAAAEAAAAAAAAAD3Jldmlld19yZWdpc3RyeQAAAAATAAAAAA==" ]),
       options
     )
   }
   public readonly fromJSON = {
     init: this.txFromJSON<null>,
+        upgrade: this.txFromJSON<null>,
         get_equipment: this.txFromJSON<Option<Equipment>>,
         list_equipment: this.txFromJSON<u32>,
         rent_equipment: this.txFromJSON<null>,
         resolve_rental: this.txFromJSON<null>,
         return_equipment: this.txFromJSON<null>,
-        get_total_equipment: this.txFromJSON<u32>
+        get_total_equipment: this.txFromJSON<u32>,
+        set_review_registry: this.txFromJSON<null>
   }
 }

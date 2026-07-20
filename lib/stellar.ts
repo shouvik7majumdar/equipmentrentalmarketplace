@@ -11,12 +11,14 @@ import {
   Networks
 } from "@stellar/stellar-sdk";
 
-export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "";
-export const REVIEW_REGISTRY_ID = process.env.NEXT_PUBLIC_REVIEW_REGISTRY_ID || "";
-export const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
-export const NETWORK = process.env.NEXT_PUBLIC_NETWORK || "testnet";
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
-export const NETWORK_PASSPHRASE = process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || "Test SDF Network ; September 2015";
+import config from "./config.json";
+
+export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || config.CONTRACT_ID || "";
+export const REVIEW_REGISTRY_ID = process.env.NEXT_PUBLIC_REVIEW_REGISTRY_ID || config.REVIEW_REGISTRY_ID || "";
+export const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || config.TOKEN_ADDRESS || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+export const NETWORK = process.env.NEXT_PUBLIC_NETWORK || config.NETWORK || "testnet";
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || config.RPC_URL || "https://soroban-testnet.stellar.org";
+export const NETWORK_PASSPHRASE = process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || config.NETWORK_PASSPHRASE || "Test SDF Network ; September 2015";
 
 // Native XLM has 7 decimals
 export const DECIMALS = 7;

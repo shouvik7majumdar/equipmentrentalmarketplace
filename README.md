@@ -1,32 +1,32 @@
-# Stellar Invoice Financing Marketplace (InvoiceFlow)
+# Stellar Equipment Rental Marketplace (RentChain)
 
-InvoiceFlow is a decentralized invoice financing DApp powered by **Soroban Smart Contracts**, **Next.js 15**, and **StellarWalletsKit**. 
+RentChain is a decentralized peer-to-peer (P2P) industrial equipment and tool rental marketplace powered by **Soroban Smart Contracts**, **Next.js 15**, and **StellarWalletsKit**. 
 
-This DApp enables businesses to list unpaid invoices at a discount to unlock immediate working capital. Investors purchase these invoices and collect the full face value upon maturity when the borrower repays the debt.
+This DApp enables equipment owners to list tools/machinery and renters to lease them securely with safety deposits held in smart-contract escrow. It features a decentralized Reputation registry to calculate lessor/lessee reputation scores and log rating comments on-chain.
 
 ---
 
 ## 🔗 Project Links
 
-* **GitHub Repository**: [mathsphile/invoiceFlow](https://github.com/mathsphile/invoiceFlow)
-* **Live Demo**: [InvoiceFlow Production App](https://invoice-flow-indol.vercel.app/)
-* **Demo Video**: [InvoiceFlow Walkthrough (YouTube)](https://youtu.be/demo-video-placeholder)
+* **GitHub Repository**: [brooklyyynnn/equipment-rental-marketplace](https://github.com/brooklyyynnn/equipment-rental-marketplace)
+* **Live Demo**: [RentChain Production App](https://equipment-rental-marketplace.vercel.app/)
+* **Demo Video**: [RentChain Walkthrough (YouTube)](https://youtu.be/demo-video-placeholder)
 
 ---
 
 ## 📸 Screenshots & Proof of Architecture
 
 ### 1. Landing Portal
-*InvoiceFlow landing interface displaying marketplace volumes, interactive stats, and wallet connectivity.*
-![Landing Portal](public/screenshots/landing_page.png)
+*RentChain landing interface displaying marketplace volumes, interactive stats, and wallet connectivity.*
+![Landing Portal](public/landing.png)
 
-### 2. Dashboard & Platform Analytics
-*User dashboard displaying active invoice listings, trustline configurations, faucet claims, and historical transactions.*
-![Dashboard Analytics](public/screenshots/dashboard.png)
+### 2. Marketplace & Catalog
+*User marketplace catalog displaying active equipment listings, hire fees, and renter options.*
+![Marketplace Catalog](public/market.png)
 
 ### 3. Stellar Expert Explorer
 *On-chain verification showing smart contract interaction trace and SAC token transfer confirmations.*
-![Stellar Explorer](public/screenshots/explorer.png)
+![Stellar Explorer](public/contract-explorer.png)
 
 ### 4. Mobile Responsive UI
 *Fully responsive interface optimized for mobile layout (resizing cards, stackable grids, and responsive sidebar navigation).*
@@ -42,17 +42,17 @@ This DApp enables businesses to list unpaid invoices at a discount to unlock imm
 
 ## ⛓ Deployed Addresses (Stellar Testnet)
 
-* **Marketplace Contract Address**: `CAA4MCQBTFRBCQFXVHK62UTICZRA4MM2YKRO3XOJ774LHK4IBYDO43HZ` (referred to as `CONTRACT_ADDRESS_HERE` in config)
-* **USD Token Address (SAC Wrapper)**: `CDPTVB7HUN3DU3Q7JKKIDCVC2DMZ7SFLMJYD4AKB6EJ2LI2JUHRF2RJ6`
-* **Deployer Address**: `GAKAWNAR76U2MPDKUZXPYA6S6S4HOTVIXIRXIEKXJXVNA4XUIHGDSLYY`
-* **Example Contract Deployment Tx**: `a73c763213a7c231384c244a7d983a81eb8b7f3fa131b61d2e07e9061cb31b1f` (referred to as `TRANSACTION_HASH_HERE` in config)
-* **Explorer Link**: [Stellar Expert Explorer](https://stellar.expert/explorer/testnet/tx/a73c763213a7c231384c244a7d983a81eb8b7f3fa131b61d2e07e9061cb31b1f)
+* **Marketplace Contract Address**: `CBDHXTQTI6RM57GRIGG7M7QZKLG4OWYLV6ID7JQ5LCPP5UBDROJRR6VH` (referred to as `CONTRACT_ADDRESS_HERE` in config)
+* **Review Registry Address**: `CC25LHQER6EJDLCV747HWI3I3V3JUPCK4MIZFTH6NC55LTHC335Y47FC`
+* **XLM Token Address (SAC Wrapper)**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
+* **Deployer Address**: `GDFEVTCEYZ6XFTU3I63RENM3FZIZT6ZAMXLNRA6TJRWXJIGJDIRMYLZ4`
+* **Explorer Link**: [Stellar Expert Explorer](https://stellar.expert/explorer/testnet/contract/CBDHXTQTI6RM57GRIGG7M7QZKLG4OWYLV6ID7JQ5LCPP5UBDROJRR6VH)
 
 ---
 
 ## 🔑 Authentication Architecture
 
-InvoiceFlow uses **Stellar Wallet Addresses (Wallet ID)** as the primary key for authentication and login.
+RentChain uses **Stellar Wallet Addresses (Wallet ID)** as the primary key for authentication and login.
 
 ```
 [Stellar Wallet]
@@ -73,38 +73,71 @@ InvoiceFlow uses **Stellar Wallet Addresses (Wallet ID)** as the primary key for
 ```
 
 1. **Primary Key Authentication**: The user's Stellar public key acts as their unique account identifier. The DApp does not require traditional email/password credentials.
-2. **Session Persistence**: Once connected, the user clicks "Log In". The session status is saved to `localStorage` under `invoiceflow_logged_in: true` and managed globally via a Zustand state store (`hooks/useWalletStore.ts`).
-3. **Auth Guards**: Protected client-side pages (`/dashboard`, `/marketplace`, `/activity`, `/history`) are wrapped in an `AuthGuard` component. If the session is inactive, they are redirected to a lockscreen prompting authentication.
+2. **Session Persistence**: Once connected, the user clicks "Log In". The session status is saved to `localStorage` under `rentchain_logged_in: true` and managed globally via a Zustand state store (`hooks/useWallet.ts`).
+3. **Auth Guards**: Protected client-side pages (`/dashboard`, `/marketplace`, `/activity`, `/transactions`, `/analytics`, `/settings`) are wrapped in an `AuthGuard` component. If the session is inactive, they are redirected to a lockscreen prompting authentication.
 4. **Log Out**: Clicking "Log Out" clears both Zustand store memory and `localStorage` session keys.
 
 ---
 
 ## 📜 Soroban Smart Contract Specifications
 
-### File Location: `contracts/invoice_marketplace/src/lib.rs`
-
 ### 1. Data Structures & Types
-The contract stores state entries using Soroban's persistent storage.
+The contracts store state entries using Soroban's persistent storage.
 
+#### Core Rental Contract (`contracts/rental/contracts/rental/src/lib.rs`)
 ```rust
 // Storage Keys
 pub enum DataKey {
     Admin,           // Instance storage: address of contract admin
-    Token,           // Instance storage: address of the payment token (USD SAC)
-    InvoiceCount,    // Instance storage: total number of invoices listed
-    Invoice(u64),    // Persistent storage: mapped by invoice ID
+    Token,           // Instance storage: address of the payment token (XLM SAC)
+    EquipmentCount,  // Instance storage: total number of equipment listed
+    Equipment(u64),  // Persistent storage: mapped by equipment ID
+    ReviewRegistry,  // Instance storage: address of the review registry contract
 }
 
-// Invoice Struct
-pub struct Invoice {
-    pub id: u64,              // Unique invoice identifier
-    pub borrower: Address,    // Account that submitted the invoice
-    pub investor: Option<Address>, // Account that funded the invoice
-    pub amount: i128,         // Face value of the invoice
-    pub discount_price: i128, // Amount the investor pays to fund it
-    pub due_date: u64,        // Unix timestamp in seconds for maturity
-    pub status: u32,          // 0 = Submitted, 1 = Funded, 2 = Repaid
-    pub description: String,  // Metadata (invoice description or hash)
+// Equipment Struct
+pub struct Equipment {
+    pub id: u64,
+    pub owner: Address,
+    pub renter: Option<Address>,
+    pub title: String,
+    pub description: String,
+    pub price_per_day: i128,
+    pub deposit: i128,
+    pub status: u32,         // 0 = Available, 1 = Rented, 2 = Returned
+    pub rental_days: u64,
+    pub rent_start_time: u64,
+}
+```
+
+#### Review Registry Contract (`contracts/rental/contracts/review_registry/src/lib.rs`)
+```rust
+// Storage Keys
+pub enum DataKey {
+    Admin,           // Instance storage: address of contract admin
+    RentalContract,  // Instance storage: address of core rental contract
+    CompletedCount,  // Instance storage: total count of completed rentals
+    Completed(u64),  // Persistent storage: completed rental agreements
+    Reputation(Address), // Persistent storage: mapped by user address
+    Review(u64, Address), // Persistent storage: mapped by (rental_id, reviewer_address)
+}
+
+// Completed Rental Struct
+pub struct CompletedRental {
+    pub rental_id: u64,
+    pub equipment_id: u64,
+    pub renter: Address,
+    pub owner: Address,
+    pub reviewed_by_renter: bool,
+    pub reviewed_by_owner: bool,
+}
+
+// User Reputation Struct
+pub struct UserReputation {
+    pub owner_rating_sum: u32,
+    pub owner_review_count: u32,
+    pub renter_rating_sum: u32,
+    pub renter_review_count: u32,
 }
 ```
 
@@ -112,114 +145,99 @@ pub struct Invoice {
 
 #### `initialize(env: Env, admin: Address, token: Address)`
 Sets up the marketplace contract. Can only be invoked once.
-* Parameters:
-  * `admin`: Public key of the marketplace operator.
-  * `token`: Address of the payment token contract.
 
-#### `submit_invoice(env: Env, borrower: Address, amount: i128, discount_price: i128, duration: u64, description: String) -> u64`
-Allows a borrower to register a new invoice. Returns the generated invoice ID.
-* Authorization: `borrower` must authenticate.
-* Emits Event: `(symbol_short!("submit"), invoice_id, borrower)` payload: `(amount, discount_price, due_date)`.
+#### `list_equipment(env: Env, owner: Address, title: String, description: String, price_per_day: i128, deposit: i128) -> u64`
+Allows an owner to register a tool. Returns the generated equipment ID.
+* Authorization: `owner` must authenticate.
 
-#### `fund_invoice(env: Env, investor: Address, invoice_id: u64)`
-Allows an investor to fund a listed invoice.
-* Authorization: `investor` must authenticate.
-* Transfers `discount_price` tokens from `investor` to the invoice `borrower`.
-* Emits Event: `(symbol_short!("fund"), invoice_id, investor)` payload: `discount_price`.
+#### `rent_equipment(env: Env, renter: Address, equipment_id: u64, days: u64)`
+Allows a renter to rent an available tool. Locks daily rent + safety deposit in escrow.
+* Authorization: `renter` must authenticate.
 
-#### `repay_invoice(env: Env, payer: Address, invoice_id: u64)`
-Allows the borrower (or any payer) to repay the invoice debt.
-* Authorization: `payer` must authenticate.
-* Transfers the full `amount` (face value) from `payer` to the invoice `investor`.
-* Emits Event: `(symbol_short!("repay"), invoice_id, payer)` payload: `amount`.
+#### `return_equipment(env: Env, renter: Address, equipment_id: u64)`
+Allows the renter to initiate a return, moving the status of the tool to `Returned (2)`.
+* Authorization: `renter` must authenticate.
+
+#### `resolve_rental(env: Env, owner: Address, equipment_id: u64, refund_deposit: i128, claim_deposit: i128)`
+Allows the owner to inspect the returned tool, settle any damages, payout the escrows, and notify the `review_registry` cross-contract to log the deal.
+* Authorization: `owner` must authenticate.
+
+#### `submit_review(env: Env, reviewer: Address, completed_rental_id: u64, rating: u32, comment: String)`
+Allows the renter or owner to submit a 1-5 star review.
+* Authorization: `reviewer` must authenticate.
 
 ---
 
 ## 🚀 User Proof of Concept (PoC) Walkthrough
 
-Follow this step-by-step test scenario to experience the DApp's core lifecycle on the Stellar Testnet. The DApp includes an **Interactive Onboarding (User PoC)** checklist on the Dashboard that tracks your progress in real-time.
+Follow this step-by-step test scenario to experience the DApp's core lifecycle on the Stellar Testnet. 
 
 ```
-       AUTHENTICATE             ADD TRUSTLINE             CLAIM MINT
+       AUTHENTICATE             LIST EQUIPMENT             RENT EQUIPMENT
 ┌────────────────────────┐  ┌───────────────────┐  ┌────────────────────┐
-│ 1. Connect wallet      │─►│ 2. Register USD   │─►│ 3. Request 1000    │
-│    and sign in session │  │    Stellar Asset  │  │    mock USD tokens │
+│ 1. Connect wallet      │─►│ 2. Submit tool     │─►│ 3. Lock escrow &   │
+│    and sign in session │  │    catalog details │  │    start rental    │
 └────────────────────────┘  └───────────────────┘  └────────────────────┘
                                                              │
                                                              ▼
-         REPAY DEBT               FUND INVOICE             LIST ASSET
+         SUBMIT REVIEW            RESOLVE PAYOUT            RETURN TOOL
 ┌────────────────────────┐  ┌───────────────────┐  ┌────────────────────┐
-│ 6. Settle full amount  │◄─│ 5. Invest in a    │◄─│ 4. Submit invoice   │
-│    upon maturity       │  │    listing        │  │    at a discount   │
+│ 6. Submit 1-5 star     │◄─│ 5. Settle claims  │◄─│ 4. Initiate return │
+│    reviews on-chain    │  │    and payout     │  │    post rental     │
 └────────────────────────┘  └───────────────────┘  └────────────────────┘
 ```
 
 ### Step 1: Wallet Authentication
 1. Install [Freighter Wallet](https://www.freighter.app/) extension and switch network to **Testnet**.
-2. Go to the InvoiceFlow landing page (`http://localhost:3000`).
-3. Click **Log In with Wallet ID**. Approve the connection in Freighter.
-4. Once authenticated, your session is established, and you are redirected to the **Dashboard**.
+2. Go to the RentChain landing page (`http://localhost:3000`).
+3. Click **Connect Wallet** and select Freighter.
+4. Once authenticated, your session is established, and you are redirected to the **Marketplace**.
 
-### Step 2: Establish USD Trustline
-1. Before your address can hold or transfer the marketplace's wrapped USD token, you must establish a Stellar Trustline.
-2. In the Dashboard Faucet panel, click **Add USD Trustline**.
-3. Confirm the transaction in Freighter. This executes a classic Stellar `changeTrust` operation.
+### Step 2: List a Tool
+1. Go to the **Marketplace** page and click **List New Equipment**.
+2. Fill out the form:
+   * **Title**: `Kushlan Portable Concrete Mixer`
+   * **Rate per Day**: `8 XLM`
+   * **Security Deposit**: `40 XLM`
+   * **Description**: `Direct drive concrete mixer.`
+3. Click **Submit** and sign the transaction in Freighter.
 
-### Step 3: Claim Faucet funding
-1. In the Dashboard, click **Request 1,000 USD**.
-2. The server-side faucet API (`/api/mint`) will submit a payment transaction from the deployer account directly to your wallet address.
-3. Your **Marketplace Balance** will update in the top right showing `1000.00 USD`.
+### Step 3: Rent a Tool
+1. Switch to a renter wallet account.
+2. Find the listing in the catalog and choose duration (e.g. `2 days`).
+3. Click **Rent Now** and sign the transaction in Freighter.
+4. Daily rent (`16 XLM`) + security deposit (`40` XLM) are securely locked in the core contract escrow.
 
-### Step 4: Submit a Test Invoice
-1. Go to the **Marketplace** page.
-2. Under "List New Invoice", fill out the form:
-   * **Face Value**: `500` (The total amount you owe on maturity)
-   * **Discount Price**: `450` (The price you are willing to sell the invoice for today)
-   * **Duration**: `30 Days`
-   * **Description**: `Invoice #101`
-3. Click **List Invoice** and sign the transaction in Freighter.
-4. Verify that:
-   * A new listing appears in the "Active Listings" board.
-   * The invoice appears in your "Borrower Console" with a status of **Submitted**.
-   * An event appears in the **Activity Feed** logging the submission.
+### Step 4: Return Tool
+1. As the renter, go to your **Dashboard**.
+2. Locate the active rental card under the "Renting" tab.
+3. Click **Return Equipment** and sign the transaction in Freighter.
 
-### Step 5: Fund an Invoice
-1. (Optional for testing) Switch to a different Freighter account, fund it via Friendbot, log in, create a trustline, and request faucet USD.
-2. Find the invoice in the "Active Listings" board.
-3. Click **Fund**. Confirm the transaction in Freighter.
-4. Verify that:
-   * The investor's USD balance decreases by `450` (discount price).
-   * The borrower's USD balance increases by `450`.
-   * The invoice status changes to **Funded**.
+### Step 5: Resolve Rental & Payout
+1. Switch back to the owner's wallet account and open the **Dashboard** under the "Lending" tab.
+2. Click **Inspect & Resolve** next to the returned concrete mixer.
+3. Enter damages to claim (if any), and click **Settle & Release Escrow**.
+4. Payouts are made on-chain, and the lease details are logged in the **Review Registry** contract automatically.
 
-### Step 6: Settle & Repay
-1. As the borrower (in your original account), go to the **Borrower Console** in the Marketplace.
-2. You will see your invoice status is now **Funded**.
-3. To settle the debt, click **Repay Debt** and sign the transaction in Freighter.
-4. Verify that:
-   * The borrower transfers the full face value (`500` USD) to the investor.
-   * The invoice status changes to **Repaid**.
-   * The investment cycle completes with the investor earning a yield of `50` USD (principal `450` repaid as `500`).
+### Step 6: Review & Star Reputation
+1. Go to the "History" tab in the **Dashboard**.
+2. Locate your completed lease, click **Leave Review**.
+3. Select your rating (1-5 stars), type your review comment, and submit to log it directly on the ledger.
 
 ---
 
 ## 🛠 Setup & Run Instructions
 
-### Prerequisites
-* [Node.js](https://nodejs.org) (v18+)
-* [Rust & Cargo](https://rustup.rs/)
-* [Stellar CLI](https://developers.stellar.org/docs/tools/cli)
-
 ### 1. Install Dependencies
 ```bash
-git clone <repository_url> invoicemarketplace
-cd invoicemarketplace
+git clone <repository_url> rental
+cd rental
 npm install
 ```
 
 ### 2. Compile & Test Smart Contract
 ```bash
-cd contracts/invoice_marketplace
+cd contracts/rental
 cargo test
 ```
 

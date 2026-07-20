@@ -17,11 +17,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Lint Frontend
         run: npm run lint
@@ -59,12 +59,14 @@ jobs:
 
       - name: Check Soroban Contracts Compile
         working-directory: contracts/rental
-        # We use `cargo check` instead of `cargo test` because soroban-env-host v26.1.3
-        # has a known dependency conflict in its testutils (ed25519-dalek 3.0.0 vs
-        # rand_core version mismatch with rand_chacha). The contracts themselves are
-        # verified to work correctly on Stellar Testnet.
+        # cargo check validates all Rust code is correct without running tests.
+        # We skip cargo test because soroban-env-host v26.1.3 has a known testutils
+        # dependency conflict (ed25519-dalek 3.0.0 vs rand_core version mismatch).
         run: cargo check --workspace
 
       - name: Build Soroban WASM Contracts
         working-directory: contracts/rental
-        run: cargo build --target wasm32-unknown-unknown --release
+        # Build each contract individually targeting wasm32-unknown-unknown
+        run: |
+          cargo build --target wasm32-unknown-unknown --release -p rental
+          cargo build --target wasm32-unknown-unknown --release -p review_registry

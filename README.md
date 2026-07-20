@@ -10,7 +10,7 @@ This DApp enables equipment owners to list tools/machinery and renters to lease 
 
 * **GitHub Repository**: [brooklyyynnn/equipment-rental-marketplace](https://github.com/brooklyyynnn/equipment-rental-marketplace)
 * **Live Demo**: [RentChain Production App](https://equipment-rental-marketplace.vercel.app/)
-* **Demo Video**: [RentChain Walkthrough (YouTube)](https://youtu.be/demo-video-placeholder)
+
 
 ---
 

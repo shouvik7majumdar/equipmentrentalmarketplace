@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
-import { Wallet, Activity, Compass, History, LogOut } from "lucide-react";
+import { Wallet, Activity, Compass, History, LogOut, TrendingUp, Settings } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,6 +14,8 @@ export default function Navbar() {
     { name: "Dashboard", path: "/dashboard", icon: Wallet },
     { name: "Activity", path: "/activity", icon: Activity },
     { name: "History", path: "/transactions", icon: History },
+    { name: "Analytics", path: "/analytics", icon: TrendingUp },
+    { name: "Settings", path: "/settings", icon: Settings },
   ];
 
   const formatAddress = (addr: string) => {

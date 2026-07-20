@@ -42,10 +42,31 @@ export default function Home() {
             Connect Wallet
           </Link>
         </div>
+
+        {/* DApp Modules Grid */}
+        <div className="mt-16 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
+          {[
+            { name: "Marketplace", href: "/marketplace", desc: "Rent & List Tools" },
+            { name: "Dashboard", href: "/dashboard", desc: "Manage Agreements" },
+            { name: "Activity", href: "/activity", desc: "Live Contract Events" },
+            { name: "History", href: "/transactions", desc: "Transaction Center" },
+            { name: "Analytics", href: "/analytics", desc: "Market Metrics" },
+            { name: "Settings", href: "/settings", desc: "Configure Preferences" }
+          ].map((m) => (
+            <Link
+              key={m.href}
+              href={m.href}
+              className="rounded-xl border border-zinc-900 bg-zinc-950/60 p-4 hover:border-zinc-800 hover:bg-zinc-900/40 transition-all duration-200 flex flex-col justify-between h-24 text-left group"
+            >
+              <span className="text-xs font-bold text-zinc-400 group-hover:text-indigo-400 transition-colors">{m.name}</span>
+              <span className="text-[10px] text-zinc-500 leading-normal">{m.desc}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Feature Grid */}
-      <div className="relative z-10 mx-auto mt-24 max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto mt-20 max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => {
             const Icon = feature.icon;

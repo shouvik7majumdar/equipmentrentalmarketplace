@@ -43,7 +43,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: wasm32-unknown-unknown
+          targets: wasm32v1-none
 
       - name: Cache Cargo Dependencies
         uses: actions/cache@v4
@@ -66,7 +66,8 @@ jobs:
 
       - name: Build Soroban WASM Contracts
         working-directory: contracts/rental
-        # Build each contract individually targeting wasm32-unknown-unknown
+        # soroban-sdk v26+ requires wasm32v1-none (Rust 1.84+).
+        # wasm32-unknown-unknown is unsupported on Rust 1.82+ by the Soroban build script.
         run: |
-          cargo build --target wasm32-unknown-unknown --release -p rental
-          cargo build --target wasm32-unknown-unknown --release -p review_registry
+          cargo build --target wasm32v1-none --release -p rental
+          cargo build --target wasm32v1-none --release -p review_registry

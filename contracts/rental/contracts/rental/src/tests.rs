@@ -10,10 +10,6 @@ use soroban_sdk::{
 // Since it's in the same workspace, we can import its contract client or register it!
 // Let's import the review registry code by referencing its module
 // Or register its contract type.
-mod review_registry {
-    use crate::review_registry::ReviewRegistryContract;
-    // We can define it here since it is compiled together
-}
 
 #[test]
 fn test_rental_flow_and_reviews() {

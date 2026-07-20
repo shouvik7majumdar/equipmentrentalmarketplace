@@ -37,8 +37,9 @@ This DApp enables equipment owners to list tools/machinery and renters to lease 
 ![Mobile Responsive UI] ![alt text](image.png)
 ![alt text](image-1.png)
 
-
-
+### 5. CI/CD Integration
+*Parallel GitHub Actions integration checks ensuring robust contract and frontend builds on every commit.*
+![CI/CD Integration](public/ci-cd.png)
 
 ---
 

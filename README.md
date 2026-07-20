@@ -33,9 +33,7 @@ This DApp enables equipment owners to list tools/machinery and renters to lease 
 ![Mobile Responsive UI] ![alt text](image.png)
 ![alt text](image-1.png)
 
-### 5. CI/CD Integration pipeline
-*GitHub Actions workflow verifying smart contract checks, linter validations, typescript type-checks, and production bundle builds.*
-![CI/CD Pipeline](public/screenshots/ci_cd_pipeline.png)
+
 
 
 ---

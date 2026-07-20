@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, token,
+    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, token, IntoVal,
 };
 
 #[contracttype]
@@ -34,6 +34,7 @@ pub enum DataKey {
     Token,
     TotalEquipment,
     Equipment(u32),
+    ReviewRegistry,
 }
 
 #[contract]
@@ -49,6 +50,20 @@ impl RentalContract {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Token, &token_address);
         env.storage().instance().set(&DataKey::TotalEquipment, &0u32);
+    }
+
+    /// Set the review registry contract address (Admin only)
+    pub fn set_review_registry(env: Env, review_registry: Address) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap_or_else(|| panic!("not initialized"));
+        admin.require_auth();
+        env.storage().instance().set(&DataKey::ReviewRegistry, &review_registry);
+    }
+
+    /// Upgrade contract WASM source code (Admin only)
+    pub fn upgrade(env: Env, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap_or_else(|| panic!("not initialized"));
+        admin.require_auth();
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
     }
 
     /// List a new piece of equipment for rent
@@ -206,6 +221,17 @@ impl RentalContract {
         }
 
         let renter = equipment.renter.clone().unwrap_or_else(|| panic!("no renter found"));
+
+        // Register completed rental with ReviewRegistry if set
+        if env.storage().instance().has(&DataKey::ReviewRegistry) {
+            let registry_addr: Address = env.storage().instance().get(&DataKey::ReviewRegistry).unwrap();
+            env.invoke_contract::<()>(
+                &registry_addr,
+                &Symbol::new(&env, "register_completed_rental"),
+                (id, id, renter.clone(), owner.clone()).into_val(&env)
+            );
+        }
+
         let token_address: Address = env.storage().instance().get(&DataKey::Token).unwrap();
         let token_client = token::Client::new(&env, &token_address);
 
@@ -248,3 +274,7 @@ impl RentalContract {
         env.storage().instance().get(&DataKey::TotalEquipment).unwrap_or(0)
     }
 }
+
+#[cfg(test)]
+mod tests;
+

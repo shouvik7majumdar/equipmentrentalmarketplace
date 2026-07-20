@@ -1,11 +1,14 @@
-name: Pull Request Check
+name: Pull Request Integration Checks
 
 on:
+  push:
+    branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
 
 jobs:
-  validate:
+  frontend:
+    name: Frontend Quality & Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -29,6 +32,13 @@ jobs:
       - name: Run Frontend Tests
         run: npx vitest run
 
+  soroban:
+    name: Soroban Cargo Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -45,7 +55,8 @@ jobs:
             contracts/rental/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build Soroban contracts
+      - name: Build and Test Soroban contracts
         run: |
           rustup target add wasm32-unknown-unknown
+          cargo test --manifest-path contracts/rental/Cargo.toml
           cargo build --manifest-path contracts/rental/Cargo.toml --target wasm32-unknown-unknown --release

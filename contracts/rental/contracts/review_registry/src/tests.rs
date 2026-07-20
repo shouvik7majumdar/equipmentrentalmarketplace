@@ -58,9 +58,7 @@ fn test_review_registry_flow() {
 
     // Verify double review by renter fails
     let fail_comment = String::from_str(&env, "Another review");
-    let res = env.try_as_contract_cell(|| {
-        registry_client.submit_review(&renter, &1, &4, &fail_comment);
-    });
+    let res = registry_client.try_submit_review(&renter, &1, &4, &fail_comment);
     assert!(res.is_err());
 
     // Submit review by owner (rating 4)

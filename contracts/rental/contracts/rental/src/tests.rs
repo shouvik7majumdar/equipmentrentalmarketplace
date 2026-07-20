@@ -81,7 +81,7 @@ fn test_rental_flow_and_reviews() {
     assert!(matches!(eq.status, RentalStatus::Returned));
 
     // Register Review Registry Contract
-    use crate::contracts::rental::contracts::review_registry::src::lib::ReviewRegistryContract as ReviewRegistry;
+    // use crate::contracts::rental::contracts::review_registry::src::lib::ReviewRegistryContract as ReviewRegistry;
     // Wait, let's use the code from review_registry directly. Since they are separate packages in a cargo workspace,
     // we can import the ReviewRegistryContract by compiling it. But since we need it in tests,
     // let's define a mock or registers its interface. Actually, the easiest way is to register ReviewRegistryContract

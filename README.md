@@ -1,5 +1,9 @@
 # Stellar Equipment Rental Marketplace (RentChain)
 
+[![CI](https://github.com/brooklyyynnn/equipment-rental-marketplace/actions/workflows/pr.yml/badge.svg)](https://github.com/brooklyyynnn/equipment-rental-marketplace/actions/workflows/pr.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://equipment-rental-marketplace.vercel.app/)
+[![Stellar](https://img.shields.io/badge/Powered%20by-Soroban-blueviolet?logo=stellar)](https://stellar.org)
+
 RentChain is a decentralized peer-to-peer (P2P) industrial equipment and tool rental marketplace powered by **Soroban Smart Contracts**, **Next.js 15**, and **StellarWalletsKit**. 
 
 This DApp enables equipment owners to list tools/machinery and renters to lease them securely with safety deposits held in smart-contract escrow. It features a decentralized Reputation registry to calculate lessor/lessee reputation scores and log rating comments on-chain.

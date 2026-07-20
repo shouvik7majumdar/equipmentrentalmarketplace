@@ -71,3 +71,11 @@ jobs:
         run: |
           cargo build --target wasm32v1-none --release -p rental
           cargo build --target wasm32v1-none --release -p review_registry
+
+  summary:
+      name: Build Summary
+          runs-on: ubuntu-latest
+              needs: [frontend, soroban]
+                  steps:
+                        - name: Confirm Build Success
+                                run: echo "Build successful!"

@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const stellarCli = path.resolve(__dirname, '../stellar.exe');
-const wasmPath = path.resolve(__dirname, '../contracts/rental/target/wasm32v1-none/release/rental.wasm');
+const rentalWasmPath = path.resolve(__dirname, '../contracts/rental/target/wasm32v1-none/release/rental.wasm');
+const reviewWasmPath = path.resolve(__dirname, '../contracts/rental/target/wasm32v1-none/release/review_registry.wasm');
 const configDir = path.resolve(__dirname, '../lib');
 const envPath = path.resolve(__dirname, '../.env.local');
 const configPath = path.resolve(configDir, 'config.json');
@@ -37,35 +38,57 @@ async function main() {
     console.log(`Generated deployer account: ${deployerAddress}`);
   }
 
-  // 2. Deploy Contract
-  console.log(`Deploying Wasm binary: ${wasmPath}`);
-  const deployOutput = runCmd(`"${stellarCli}" contract deploy --wasm "${wasmPath}" --source deployer --network testnet`);
-  console.log(`Contract deployed! Contract ID: ${deployOutput}`);
-  const contractId = deployOutput;
+  // 2. Deploy Rental Contract
+  console.log(`Deploying Rental Wasm binary: ${rentalWasmPath}`);
+  const rentalDeployOutput = runCmd(`"${stellarCli}" contract deploy --wasm "${rentalWasmPath}" --source deployer --network testnet`);
+  console.log(`Rental Contract deployed! Contract ID: ${rentalDeployOutput}`);
+  const rentalContractId = rentalDeployOutput;
 
-  // 3. Initialize Contract
-  // Native XLM token contract address on Stellar Testnet:
+  // 3. Deploy Review Registry Contract
+  console.log(`Deploying Review Registry Wasm binary: ${reviewWasmPath}`);
+  const reviewDeployOutput = runCmd(`"${stellarCli}" contract deploy --wasm "${reviewWasmPath}" --source deployer --network testnet`);
+  console.log(`Review Registry Contract deployed! Contract ID: ${reviewDeployOutput}`);
+  const reviewRegistryContractId = reviewDeployOutput;
+
+  // 4. Initialize Rental Contract
   const tokenAddress = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
-  console.log("Initializing contract rental marketplace instance...");
-  runCmd(`"${stellarCli}" contract invoke --id "${contractId}" --source deployer --network testnet -- init --admin "${deployerAddress}" --token_address "${tokenAddress}"`);
-  console.log("Contract initialized successfully!");
+  console.log("Initializing rental marketplace contract...");
+  runCmd(`"${stellarCli}" contract invoke --id "${rentalContractId}" --source deployer --network testnet -- init --admin "${deployerAddress}" --token_address "${tokenAddress}"`);
 
-  // 4. Generate TS bindings
-  const bindingsDir = path.resolve(__dirname, '../packages/rental-client');
-  console.log(`Generating TypeScript bindings at ${bindingsDir}...`);
-  runCmd(`"${stellarCli}" contract bindings typescript --contract-id "${contractId}" --output-dir "${bindingsDir}" --network testnet --overwrite`);
+  // 5. Initialize Review Registry Contract
+  console.log("Initializing review registry contract...");
+  runCmd(`"${stellarCli}" contract invoke --id "${reviewRegistryContractId}" --source deployer --network testnet -- init --admin "${deployerAddress}" --rental_contract "${rentalContractId}"`);
 
-  // Build binding package
-  console.log("Building TS bindings npm package...");
-  runCmd(`cd "${bindingsDir}" && npm install && npm run build`);
+  // 6. Link Rental contract to Review Registry contract
+  console.log("Linking rental contract to review registry...");
+  runCmd(`"${stellarCli}" contract invoke --id "${rentalContractId}" --source deployer --network testnet -- set_review_registry --review_registry "${reviewRegistryContractId}"`);
 
-  // 5. Write configurations
+  console.log("Contracts initialized and linked successfully!");
+
+  // 7. Generate TS bindings for Rental contract
+  const rentalBindingsDir = path.resolve(__dirname, '../packages/rental-client');
+  console.log(`Generating Rental TypeScript bindings at ${rentalBindingsDir}...`);
+  runCmd(`"${stellarCli}" contract bindings typescript --contract-id "${rentalContractId}" --output-dir "${rentalBindingsDir}" --network testnet --overwrite`);
+  
+  console.log("Building Rental TS bindings npm package...");
+  runCmd(`cd "${rentalBindingsDir}" && npm install && npm run build`);
+
+  // 8. Generate TS bindings for Review Registry contract
+  const reviewBindingsDir = path.resolve(__dirname, '../packages/review-registry-client');
+  console.log(`Generating Review Registry TypeScript bindings at ${reviewBindingsDir}...`);
+  runCmd(`"${stellarCli}" contract bindings typescript --contract-id "${reviewRegistryContractId}" --output-dir "${reviewBindingsDir}" --network testnet --overwrite`);
+
+  console.log("Building Review Registry TS bindings npm package...");
+  runCmd(`cd "${reviewBindingsDir}" && npm install && npm run build`);
+
+  // 9. Write configurations
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
   }
 
   const configData = {
-    CONTRACT_ID: contractId,
+    CONTRACT_ID: rentalContractId,
+    REVIEW_REGISTRY_ID: reviewRegistryContractId,
     NETWORK: 'testnet',
     RPC_URL: 'https://soroban-testnet.stellar.org',
     NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015',
@@ -76,7 +99,8 @@ async function main() {
   fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
   console.log(`Config JSON written to: ${configPath}`);
 
-  const envContent = `NEXT_PUBLIC_CONTRACT_ID=${contractId}
+  const envContent = `NEXT_PUBLIC_CONTRACT_ID=${rentalContractId}
+NEXT_PUBLIC_REVIEW_REGISTRY_ID=${reviewRegistryContractId}
 NEXT_PUBLIC_TOKEN_ADDRESS=${tokenAddress}
 NEXT_PUBLIC_NETWORK=testnet
 NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org

@@ -12,6 +12,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "";
+export const REVIEW_REGISTRY_ID = process.env.NEXT_PUBLIC_REVIEW_REGISTRY_ID || "";
 export const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK || "testnet";
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -32,7 +33,7 @@ export function fromStroops(stroops: bigint | string | number): number {
 /**
  * Call a read-only contract function.
  */
-export async function callReadOnly(functionName: string, args: any[] = []) {
+export async function callReadOnly(functionName: string, args: any[] = [], contractId: string = CONTRACT_ID) {
   try {
     const server = new rpc.Server(RPC_URL);
     // Use a dummy account for simulation
@@ -43,7 +44,7 @@ export async function callReadOnly(functionName: string, args: any[] = []) {
     })
     .addOperation(
       Operation.invokeContractFunction({
-        contract: CONTRACT_ID,
+        contract: contractId,
         function: functionName,
         args: args
       })
@@ -72,7 +73,8 @@ export async function callReadOnly(functionName: string, args: any[] = []) {
 export async function prepareInvokeTransaction(
   sourceAddress: string,
   functionName: string,
-  args: any[] = []
+  args: any[] = [],
+  contractId: string = CONTRACT_ID
 ) {
   const server = new rpc.Server(RPC_URL);
   const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
@@ -84,7 +86,7 @@ export async function prepareInvokeTransaction(
   })
   .addOperation(
     Operation.invokeContractFunction({
-      contract: CONTRACT_ID,
+      contract: contractId,
       function: functionName,
       args: args
     })
@@ -171,4 +173,58 @@ export async function getAllEquipment() {
     }
   }
   return equipmentList;
+}
+
+/**
+ * Get total completed rentals sequence counter.
+ */
+export async function getTotalCompletedRentals(): Promise<number> {
+  if (!REVIEW_REGISTRY_ID) return 0;
+  const res = await callReadOnly("get_total_completed_rentals", [], REVIEW_REGISTRY_ID);
+  return typeof res === "number" ? res : 0;
+}
+
+/**
+ * Get completed rental details.
+ */
+export async function getCompletedRental(id: number) {
+  if (!REVIEW_REGISTRY_ID) return null;
+  const argVal = nativeToScVal(id, { type: "u32" });
+  return await callReadOnly("get_completed_rental", [argVal], REVIEW_REGISTRY_ID);
+}
+
+/**
+ * Fetch all completed rentals registered in the review contract.
+ */
+export async function getAllCompletedRentals() {
+  const total = await getTotalCompletedRentals();
+  if (!total) return [];
+
+  const list = [];
+  for (let i = 1; i <= total; i++) {
+    const item = await getCompletedRental(i);
+    if (item) {
+      list.push(item);
+    }
+  }
+  return list;
+}
+
+/**
+ * Fetch user reputation from review registry.
+ */
+export async function getUserReputation(address: string) {
+  if (!REVIEW_REGISTRY_ID) return null;
+  const argVal = nativeToScVal(address, { type: "address" });
+  return await callReadOnly("get_reputation", [argVal], REVIEW_REGISTRY_ID);
+}
+
+/**
+ * Retrieve review content.
+ */
+export async function getReview(completedRentalId: number, reviewer: string) {
+  if (!REVIEW_REGISTRY_ID) return null;
+  const arg1 = nativeToScVal(completedRentalId, { type: "u32" });
+  const arg2 = nativeToScVal(reviewer, { type: "address" });
+  return await callReadOnly("get_review", [arg1, arg2], REVIEW_REGISTRY_ID);
 }

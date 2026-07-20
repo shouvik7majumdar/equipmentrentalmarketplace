@@ -60,9 +60,9 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
-import Home from "@/app/page.tsx";
-import TransactionHistory from "@/app/transactions/page.tsx";
-import SettingsPage from "@/app/settings/page.tsx";
+import Home from "@/app/page";
+import TransactionHistory from "@/app/transactions/page";
+import SettingsPage from "@/app/settings/page";
 
 describe("Frontend Page Component Rendering", () => {
   test("Landing Page renders welcome texts and exploration link", () => {
